@@ -7,78 +7,51 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f9d58">
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
-
-<script>
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register('service-worker.js');
-}
-</script>
-
 <style>
 
-*{
-box-sizing:border-box;
-font-family:'Poppins',sans-serif;
-}
-
 body{
-margin:0;
-color:white;
+font-family:Arial;
 background:linear-gradient(-45deg,#11998e,#38ef7d,#0f2027,#2c5364);
-background-size:400% 400%;
-animation:bg 10s ease infinite;
-}
-
-@keyframes bg{
-0%{background-position:0% 50%}
-50%{background-position:100% 50%}
-100%{background-position:0% 50%}
+color:white;
+padding:10px;
 }
 
 .container{
 max-width:420px;
 margin:auto;
-padding:15px;
 }
 
 .card{
-background:rgba(255,255,255,0.12);
-backdrop-filter:blur(10px);
+background:rgba(255,255,255,0.15);
 padding:15px;
-border-radius:15px;
-margin-top:15px;
-box-shadow:0 4px 15px rgba(0,0,0,0.2);
+border-radius:10px;
+margin-top:12px;
 }
 
 input{
 width:100%;
-padding:12px;
+padding:10px;
 margin-top:8px;
 border:none;
-border-radius:10px;
-outline:none;
-font-size:14px;
+border-radius:6px;
 }
 
 button{
 width:100%;
-padding:12px;
-margin-top:12px;
-border:none;
-border-radius:10px;
+padding:10px;
+margin-top:10px;
 background:#00ffcc;
-color:black;
-font-weight:600;
-font-size:15px;
+border:none;
+border-radius:6px;
+font-weight:bold;
 }
 
 .result-card{
 background:white;
 color:black;
-padding:12px;
-border-radius:12px;
+padding:10px;
 margin-top:10px;
+border-radius:8px;
 }
 
 </style>
@@ -97,9 +70,9 @@ margin-top:10px;
 <input id="name" placeholder="Name">
 <input id="address" placeholder="Address">
 <input id="phone" placeholder="Phone">
-<input id="amount" placeholder="Received Rs">
+<input id="amount" placeholder="Received Amount">
 
-<button onclick="saveData()">SAVE DATA</button>
+<button onclick="saveData()">Save Data</button>
 
 <p id="msg"></p>
 
@@ -110,7 +83,7 @@ margin-top:10px;
 <h3>Search</h3>
 
 <input id="search" placeholder="Name or Phone">
-<button onclick="searchData()">SEARCH</button>
+<button onclick="searchData()">Search</button>
 
 <div id="result"></div>
 
@@ -122,11 +95,16 @@ margin-top:10px;
 
 let db;
 
-const request = indexedDB.open("DigiPayattuDB", 1);
+let request = indexedDB.open("PayattuDB",1);
 
 request.onupgradeneeded = function(e){
+
 db = e.target.result;
+
+if(!db.objectStoreNames.contains("customers")){
 db.createObjectStore("customers",{keyPath:"id",autoIncrement:true});
+}
+
 };
 
 request.onsuccess = function(e){
@@ -135,65 +113,92 @@ db = e.target.result;
 
 function saveData(){
 
-let tx = db.transaction("customers","readwrite");
-let store = tx.objectStore("customers");
+if(!db){
+alert("Database loading...");
+return;
+}
+
+let name=document.getElementById("name").value;
+let address=document.getElementById("address").value;
+let phone=document.getElementById("phone").value;
+let amount=document.getElementById("amount").value;
+
+let tx=db.transaction("customers","readwrite");
+
+let store=tx.objectStore("customers");
 
 store.add({
-name:name.value,
-address:address.value,
-phone:phone.value,
-received:amount.value,
+
+name:name,
+address:address,
+phone:phone,
+received:Number(amount),
 giveback:0,
 date:new Date().toLocaleDateString()
+
 });
 
-msg.innerHTML="✅ Data added successfully";
+document.getElementById("msg").innerHTML="Data Added Successfully";
 
-name.value="";
-address.value="";
-phone.value="";
-amount.value="";
+document.getElementById("name").value="";
+document.getElementById("address").value="";
+document.getElementById("phone").value="";
+document.getElementById("amount").value="";
+
 }
 
 function searchData(){
 
-let keyword = document.getElementById("search").value.toLowerCase();
+let keyword=document.getElementById("search").value.toLowerCase();
+
+let result=document.getElementById("result");
 
 result.innerHTML="";
 
-let tx = db.transaction("customers","readonly");
-let store = tx.objectStore("customers");
+let tx=db.transaction("customers","readonly");
 
-store.openCursor().onsuccess = function(e){
+let store=tx.objectStore("customers");
 
-let cursor = e.target.result;
+store.openCursor().onsuccess=function(e){
+
+let cursor=e.target.result;
 
 if(cursor){
 
-let data = cursor.value;
+let data=cursor.value;
 
 if(
+
 data.name.toLowerCase().includes(keyword) ||
+
 data.phone.includes(keyword)
+
 ){
 
-result.innerHTML += `
+result.innerHTML+=`
 
 <div class="result-card">
 
 📅 ${data.date}<br>
+
 👤 ${data.name}<br>
-📍 Address: ${data.address}<br>
+
+📍 ${data.address}<br>
+
 📞 ${data.phone}<br>
-💰 Received: ₹${data.received}<br>
-💸 Give Back: ₹${data.giveback}
+
+💰 Received : ₹${data.received}<br>
+
+💸 Give Back : ₹${data.giveback}
 
 <br><br>
 
 <input id="give_${data.id}" placeholder="Enter give back amount">
 
 <button onclick="updateGiveBack(${data.id})">
+
 Add Give Back
+
 </button>
 
 </div>
@@ -212,38 +217,31 @@ cursor.continue();
 
 function updateGiveBack(id){
 
-let amountInput = document.getElementById("give_"+id);
+let amount=document.getElementById("give_"+id).value;
 
-if(!amountInput){
-alert("Input not found");
-return;
-}
+if(amount=="" || isNaN(amount)){
 
-let amount = amountInput.value;
-
-if(amount === "" || isNaN(amount)){
 alert("Enter valid amount");
+
 return;
+
 }
 
-let tx = db.transaction("customers","readwrite");
-let store = tx.objectStore("customers");
+let tx=db.transaction("customers","readwrite");
 
-let req = store.get(id);
+let store=tx.objectStore("customers");
 
-req.onsuccess = function(){
+let req=store.get(id);
 
-let data = req.result;
+req.onsuccess=function(){
 
-let current = Number(data.giveback || 0);
+let data=req.result;
 
-data.giveback = current + Number(amount);
+data.giveback=Number(data.giveback)+Number(amount);
 
 store.put(data);
 
-amountInput.value="";
-
-alert("Give back updated");
+alert("Give Back Updated");
 
 searchData();
 
@@ -254,5 +252,6 @@ searchData();
 </script>
 
 </body>
+
 </html>
 ```
