@@ -6,95 +6,51 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f9d58">
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
-
-<script>
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register('service-worker.js');
-}
-</script>
-
 <style>
 
-*{
-box-sizing:border-box;
-font-family:'Poppins',sans-serif;
-}
-
 body{
-margin:0;
+font-family:Arial;
+background:#0f2027;
 color:white;
-background:linear-gradient(-45deg,#11998e,#38ef7d,#0f2027,#2c5364);
-background-size:400% 400%;
-animation:bg 10s ease infinite;
-}
-
-@keyframes bg{
-0%{background-position:0% 50%}
-50%{background-position:100% 50%}
-100%{background-position:0% 50%}
+padding:10px;
 }
 
 .container{
 max-width:420px;
 margin:auto;
-padding:15px;
-}
-
-h2{
-text-align:center;
-font-weight:600;
-margin-bottom:10px;
 }
 
 .card{
-background:rgba(255,255,255,0.12);
-backdrop-filter:blur(10px);
+background:#1f3a44;
 padding:15px;
-border-radius:15px;
-margin-top:15px;
-box-shadow:0 4px 15px rgba(0,0,0,0.2);
+border-radius:10px;
+margin-top:10px;
 }
 
 input{
 width:100%;
-padding:12px;
+padding:10px;
 margin-top:8px;
 border:none;
-border-radius:10px;
-outline:none;
-font-size:14px;
+border-radius:6px;
 }
 
 button{
 width:100%;
-padding:12px;
-margin-top:12px;
-border:none;
-border-radius:10px;
-background:#00ffcc;
-color:black;
-font-weight:600;
-font-size:15px;
-}
-
-button:active{
-transform:scale(0.97);
-}
-
-#msg{
-text-align:center;
+padding:10px;
 margin-top:10px;
-font-weight:500;
-color:#00ffcc;
+background:#00ffcc;
+border:none;
+border-radius:6px;
+font-weight:bold;
 }
 
-.result-card{
+.result{
 background:white;
 color:black;
-padding:12px;
-border-radius:12px;
+padding:10px;
 margin-top:10px;
+border-radius:8px;
 }
 
 </style>
@@ -104,29 +60,30 @@ margin-top:10px;
 
 <div class="container">
 
-<h2>💰 Digi Payattu</h2>
+<h2>Digi Payattu</h2>
 
 <div class="card">
 
 <h3>Add Customer</h3>
 
 <input id="name" placeholder="Name">
-<input id="address" placeholder="Address">
 <input id="phone" placeholder="Phone">
-<input id="amount" placeholder="Received Rs">
+<input id="amount" placeholder="Received Amount">
 
-<button onclick="saveData()">SAVE DATA</button>
+<button onclick="saveData()">Save Data</button>
 
 <p id="msg"></p>
 
 </div>
+
 
 <div class="card">
 
 <h3>Search</h3>
 
 <input id="search" placeholder="Name or Phone">
-<button onclick="searchData()">SEARCH</button>
+
+<button onclick="searchData()">Search</button>
 
 <div id="result"></div>
 
@@ -138,65 +95,62 @@ margin-top:10px;
 
 let db;
 
-const request = indexedDB.open("DigiPayattuDB", 1);
+let request = indexedDB.open("PayattuDB",1);
 
 request.onupgradeneeded = function(e){
+
 db = e.target.result;
 
-if(!db.objectStoreNames.contains("customers")){
 db.createObjectStore("customers",{keyPath:"id",autoIncrement:true});
-}
 
 };
 
 request.onsuccess = function(e){
+
 db = e.target.result;
+
 };
+
+
 
 function saveData(){
 
-if(!db){
-alert("Database loading...");
-return;
-}
-
 let tx = db.transaction("customers","readwrite");
+
 let store = tx.objectStore("customers");
 
 store.add({
+
 name:document.getElementById("name").value,
-address:document.getElementById("address").value,
+
 phone:document.getElementById("phone").value,
+
 received:document.getElementById("amount").value,
-giveback:"",
+
+giveback:0,
+
 date:new Date().toLocaleDateString()
+
 });
 
-msg.innerHTML="✅ Data added successfully";
+msg.innerHTML="Data added";
 
 name.value="";
-address.value="";
 phone.value="";
 amount.value="";
+
 }
+
+
 
 function searchData(){
 
-if(!db){
-alert("Database loading...");
-return;
-}
+let keyword = document.getElementById("search").value.toLowerCase();
 
 result.innerHTML="";
 
-let keyword = document.getElementById("search").value.trim().toLowerCase();
-
-if(keyword===""){
-result.innerHTML="Enter name or phone to search";
-return;
-}
-
 let tx = db.transaction("customers","readonly");
+
 let store = tx.objectStore("customers");
 
 store.openCursor().onsuccess = function(e){
@@ -208,24 +162,66 @@ if(cursor){
 let data = cursor.value;
 
 if(
-(data.name && data.name.toLowerCase().includes(keyword)) ||
-(data.phone && data.phone.includes(keyword))
+
+data.name.toLowerCase().includes(keyword) ||
+
+data.phone.includes(keyword)
+
 ){
 
 result.innerHTML += `
-<div class="result-card">
-📅 ${data.date}<br>
-👤 ${data.name}<br>
-📞 ${data.phone}<br>
-💰 Received: ₹${data.received}<br>
-💸 Give Back: ₹${data.giveback}
+
+<div class="result">
+
+${data.name}<br>
+
+${data.phone}<br>
+
+Received: ₹${data.received}<br>
+
+Give Back: ₹${data.giveback}
+
+<button onclick="giveBack(${data.id})">Update Give Back</button>
+
 </div>
+
 `;
 
 }
 
 cursor.continue();
+
 }
+
+};
+
+}
+
+
+
+function giveBack(id){
+
+let amount = prompt("Enter Give Back Amount");
+
+if(!amount) return;
+
+let tx = db.transaction("customers","readwrite");
+
+let store = tx.objectStore("customers");
+
+let req = store.get(id);
+
+req.onsuccess = function(){
+
+let data = req.result;
+
+data.giveback = amount;
+
+store.put(data);
+
+alert("Updated");
+
+searchData();
 
 };
 
