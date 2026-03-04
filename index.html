@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -76,13 +77,11 @@ border-radius:8px;
 
 </div>
 
-
 <div class="card">
 
 <h3>Search</h3>
 
 <input id="search" placeholder="Name or Phone">
-
 <button onclick="searchData()">Search</button>
 
 <div id="result"></div>
@@ -112,7 +111,6 @@ db = e.target.result;
 };
 
 
-
 function saveData(){
 
 let tx = db.transaction("customers","readwrite");
@@ -122,18 +120,14 @@ let store = tx.objectStore("customers");
 store.add({
 
 name:document.getElementById("name").value,
-
 phone:document.getElementById("phone").value,
-
 received:document.getElementById("amount").value,
-
 giveback:0,
-
 date:new Date().toLocaleDateString()
 
 });
 
-msg.innerHTML="Data added";
+msg.innerHTML="Data added successfully";
 
 name.value="";
 phone.value="";
@@ -173,15 +167,19 @@ result.innerHTML += `
 
 <div class="result">
 
-${data.name}<br>
+<b>Name:</b> ${data.name}<br>
+<b>Phone:</b> ${data.phone}<br>
+<b>Date:</b> ${data.date}<br>
+<b>Received:</b> ₹${data.received}<br>
+<b>Give Back:</b> ₹${data.giveback}
 
-${data.phone}<br>
+<br><br>
 
-Received: ₹${data.received}<br>
+<input id="give_${data.id}" placeholder="Enter give back amount">
 
-Give Back: ₹${data.giveback}
-
-<button onclick="giveBack(${data.id})">Update Give Back</button>
+<button onclick="updateGiveBack(${data.id})">
+Add Give Back
+</button>
 
 </div>
 
@@ -199,11 +197,14 @@ cursor.continue();
 
 
 
-function giveBack(id){
+function updateGiveBack(id){
 
-let amount = prompt("Enter Give Back Amount");
+let amount = document.getElementById("give_"+id).value;
 
-if(!amount) return;
+if(!amount){
+alert("Enter amount");
+return;
+}
 
 let tx = db.transaction("customers","readwrite");
 
@@ -215,11 +216,13 @@ req.onsuccess = function(){
 
 let data = req.result;
 
-data.giveback = amount;
+let current = Number(data.giveback || 0);
+
+data.giveback = current + Number(amount);
 
 store.put(data);
 
-alert("Updated");
+alert("Give back updated");
 
 searchData();
 
@@ -231,3 +234,4 @@ searchData();
 
 </body>
 </html>
+```
