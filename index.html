@@ -4,14 +4,11 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f9d58">
-
 <style>
 
 body{
 font-family:Arial;
-background:linear-gradient(-45deg,#11998e,#38ef7d,#0f2027,#2c5364);
+background:#0f2027;
 color:white;
 padding:10px;
 }
@@ -22,7 +19,7 @@ margin:auto;
 }
 
 .card{
-background:rgba(255,255,255,0.15);
+background:#1f3a44;
 padding:15px;
 border-radius:10px;
 margin-top:12px;
@@ -61,7 +58,7 @@ border-radius:8px;
 
 <div class="container">
 
-<h2>💰 Digi Payattu</h2>
+<h2>Digi Payattu</h2>
 
 <div class="card">
 
@@ -95,28 +92,25 @@ border-radius:8px;
 
 let db;
 
-let request = indexedDB.open("PayattuDB",1);
+let request=indexedDB.open("PayattuDB",1);
 
-request.onupgradeneeded = function(e){
+request.onupgradeneeded=function(e){
 
-db = e.target.result;
+db=e.target.result;
 
-if(!db.objectStoreNames.contains("customers")){
 db.createObjectStore("customers",{keyPath:"id",autoIncrement:true});
-}
 
 };
 
-request.onsuccess = function(e){
-db = e.target.result;
+request.onsuccess=function(e){
+
+db=e.target.result;
+
 };
+
+
 
 function saveData(){
-
-if(!db){
-alert("Database loading...");
-return;
-}
 
 let name=document.getElementById("name").value;
 let address=document.getElementById("address").value;
@@ -138,7 +132,7 @@ date:new Date().toLocaleDateString()
 
 });
 
-document.getElementById("msg").innerHTML="Data Added Successfully";
+document.getElementById("msg").innerHTML="Data Added";
 
 document.getElementById("name").value="";
 document.getElementById("address").value="";
@@ -147,9 +141,16 @@ document.getElementById("amount").value="";
 
 }
 
+
+
 function searchData(){
 
-let keyword=document.getElementById("search").value.toLowerCase();
+if(!db){
+alert("Database loading...");
+return;
+}
+
+let keyword=document.getElementById("search").value.trim().toLowerCase();
 
 let result=document.getElementById("result");
 
@@ -180,16 +181,11 @@ result.innerHTML+=`
 <div class="result-card">
 
 📅 ${data.date}<br>
-
 👤 ${data.name}<br>
-
 📍 ${data.address}<br>
-
 📞 ${data.phone}<br>
-
-💰 Received : ₹${data.received}<br>
-
-💸 Give Back : ₹${data.giveback}
+💰 Received: ₹${data.received}<br>
+💸 Give Back: ₹${data.giveback}
 
 <br><br>
 
@@ -214,6 +210,8 @@ cursor.continue();
 };
 
 }
+
+
 
 function updateGiveBack(id){
 
@@ -252,6 +250,5 @@ searchData();
 </script>
 
 </body>
-
 </html>
 ```
