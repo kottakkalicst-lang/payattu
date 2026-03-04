@@ -9,13 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
 
 <script>
-
 if ('serviceWorker' in navigator) {
-
 navigator.serviceWorker.register('service-worker.js');
-
 }
-
 </script>
 
 <style>
@@ -146,7 +142,11 @@ const request = indexedDB.open("DigiPayattuDB", 1);
 
 request.onupgradeneeded = function(e){
 db = e.target.result;
-db.createObjectStore("customers", {keyPath:"id", autoIncrement:true});
+
+if(!db.objectStoreNames.contains("customers")){
+db.createObjectStore("customers",{keyPath:"id",autoIncrement:true});
+}
+
 };
 
 request.onsuccess = function(e){
@@ -155,26 +155,46 @@ db = e.target.result;
 
 function saveData(){
 
+if(!db){
+alert("Database loading...");
+return;
+}
+
 let tx = db.transaction("customers","readwrite");
 let store = tx.objectStore("customers");
 
 store.add({
-name:name.value,
-address:address.value,
-phone:phone.value,
-received:amount.value,
+name:document.getElementById("name").value,
+address:document.getElementById("address").value,
+phone:document.getElementById("phone").value,
+received:document.getElementById("amount").value,
 giveback:"",
 date:new Date().toLocaleDateString()
 });
 
 msg.innerHTML="✅ Data added successfully";
 
-name.value=address.value=phone.value=amount.value="";
+name.value="";
+address.value="";
+phone.value="";
+amount.value="";
 }
 
 function searchData(){
 
+if(!db){
+alert("Database loading...");
+return;
+}
+
 result.innerHTML="";
+
+let keyword = document.getElementById("search").value.trim().toLowerCase();
+
+if(keyword===""){
+result.innerHTML="Enter name or phone to search";
+return;
+}
 
 let tx = db.transaction("customers","readonly");
 let store = tx.objectStore("customers");
@@ -188,14 +208,15 @@ if(cursor){
 let data = cursor.value;
 
 if(
-data.name.toLowerCase().includes(search.value.toLowerCase()) ||
-data.phone.includes(search.value)
+(data.name && data.name.toLowerCase().includes(keyword)) ||
+(data.phone && data.phone.includes(keyword))
 ){
 
 result.innerHTML += `
 <div class="result-card">
 📅 ${data.date}<br>
 👤 ${data.name}<br>
+📞 ${data.phone}<br>
 💰 Received: ₹${data.received}<br>
 💸 Give Back: ₹${data.giveback}
 </div>
@@ -213,5 +234,4 @@ cursor.continue();
 </script>
 
 </body>
-
 </html>
